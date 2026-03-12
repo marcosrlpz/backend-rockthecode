@@ -15,14 +15,17 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
+    category: {
+      type: String,
+      trim: true
+    },
     image: {
       url: String,
       public_id: String
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      ref: 'User'
     },
     likes: [
       {

@@ -35,14 +35,24 @@ const seedProducts = async () => {
         price: 129,
         description: 'Air Max',
         category: 'fashion'
+      },
+      {
+        name: 'Samsung Galaxy S24',
+        price: 899,
+        description: 'Flagship Android 2024',
+        category: 'tech'
+      },
+      {
+        name: 'Auriculares Sony WH-1000XM5',
+        price: 349,
+        description: 'Cancelación de ruido premium',
+        category: 'tech'
       }
     ];
 
     await Product.insertMany(products);
-
     console.log('✅ Productos sembrados correctamente');
     process.exit();
-
   } catch (error) {
     console.error('❌ Error en la seed:', error.message);
     process.exit(1);

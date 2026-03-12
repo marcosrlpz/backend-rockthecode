@@ -12,34 +12,11 @@ const {
 const { upload, uploadToCloudinary } = require('../middleware/cloudinary');
 const { requireAuth, checkAdmin } = require('../middleware/auth');
 
-/* ============================
-   PUBLIC
-============================ */
-
-// Ver todos los productos
 router.get('/', getProducts);
-
-// Ver producto por ID
 router.get('/:id', getProductById);
 
-/* ============================
-   ADMIN
-============================ */
-
-// Crear producto
-router.post(
-  '/',
-  requireAuth,
-  checkAdmin,
-  upload.single('image'),
-  uploadToCloudinary,
-  createProduct
-);
-
-// Actualizar producto
-router.put('/:id', requireAuth, checkAdmin, updateProduct);
-
-// Eliminar producto
+router.post('/', requireAuth, checkAdmin, upload.single('image'), uploadToCloudinary, createProduct);
+router.put('/:id', requireAuth, checkAdmin, upload.single('image'), uploadToCloudinary, updateProduct);
 router.delete('/:id', requireAuth, checkAdmin, deleteProduct);
 
 module.exports = router;
