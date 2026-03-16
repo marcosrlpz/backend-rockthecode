@@ -6,7 +6,8 @@ const {
   getProducts,
   getProductById,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  toggleLike
 } = require('../controllers/productController');
 
 const { upload, uploadToCloudinary } = require('../middleware/cloudinary');
@@ -18,5 +19,8 @@ router.get('/:id', getProductById);
 router.post('/', requireAuth, checkAdmin, upload.single('image'), uploadToCloudinary, createProduct);
 router.put('/:id', requireAuth, checkAdmin, upload.single('image'), uploadToCloudinary, updateProduct);
 router.delete('/:id', requireAuth, checkAdmin, deleteProduct);
+
+// Like toggle — cualquier usuario logueado
+router.put('/:id/like', requireAuth, toggleLike);
 
 module.exports = router;

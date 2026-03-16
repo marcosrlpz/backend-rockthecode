@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const mongoose = require('mongoose');
 const Product = require('../api/models/Product');
+const User = require('../api/models/User');
 
 const connectDB = async () => {
   try {
@@ -15,38 +16,51 @@ const connectDB = async () => {
 
 const seedProducts = async () => {
   try {
+    // Buscar un admin para asignar como owner
+    const admin = await User.findOne({ role: 'admin' });
+
+    if (!admin) {
+      console.error('❌ No hay ningún admin en la base de datos. Crea uno primero desde MongoAtlas.');
+      process.exit(1);
+    }
+
     await Product.deleteMany();
 
     const products = [
       {
         name: 'iPhone 15',
         price: 999,
-        description: 'Último modelo Apple',
-        category: 'tech'
+        description: 'Último modelo Apple con chip A17',
+        category: 'tech',
+        owner: admin._id
       },
       {
-        name: 'MacBook Pro',
+        name: 'MacBook Pro M3',
         price: 1999,
-        description: 'Chip M1 Pro',
-        category: 'tech'
+        description: 'Portátil profesional con chip M3 Pro',
+        category: 'tech',
+        owner: admin._id
       },
       {
-        name: 'Zapatillas Nike',
+        name: 'Zapatillas Nike Air Max',
         price: 129,
-        description: 'Air Max',
-        category: 'fashion'
+        description: 'Zapatillas con amortiguación Air Max',
+        category: 'fashion',
+        owner: admin._id
       },
       {
         name: 'Samsung Galaxy S24',
         price: 899,
-        description: 'Flagship Android 2024',
-        category: 'tech'
+        description: 'Flagship Android con IA integrada',
+        category: 'tech',
+        owner: admin._id
       },
       {
-        name: 'Auriculares Sony WH-1000XM5',
+        name: 'Sony WH-1000XM5',
         price: 349,
-        description: 'Cancelación de ruido premium',
-        category: 'tech'
+        description: 'Auriculares con cancelación de ruido premium',
+        category: 'tech',
+        owner: admin._id
       }
     ];
 

@@ -3,9 +3,6 @@ const Product = require('../models/Product');
 const { signToken } = require('../utils/jwt');
 const { deleteFromCloudinary } = require('../middleware/cloudinary');
 
-/* ============================
-   REGISTER
-============================ */
 const register = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
@@ -31,14 +28,12 @@ const register = async (req, res, next) => {
     });
 
     const token = signToken(user._id);
-
     res.status(201).json({ user, token });
   } catch (error) {
     next(error);
   }
 };
 
-/* ============================ */
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -50,14 +45,12 @@ const login = async (req, res, next) => {
     if (!match) return res.status(401).json({ message: 'Credenciales incorrectas' });
 
     const token = signToken(user._id);
-
     res.status(200).json({ user, token });
   } catch (error) {
     next(error);
   }
 };
 
-/* ============================ */
 const getUsers = async (req, res, next) => {
   try {
     const users = await User.find().populate('favorites');
@@ -67,7 +60,6 @@ const getUsers = async (req, res, next) => {
   }
 };
 
-/* ============================ */
 const getUserById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).populate('favorites');
@@ -78,7 +70,6 @@ const getUserById = async (req, res, next) => {
   }
 };
 
-/* ============================ */
 const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).populate('favorites');
@@ -88,7 +79,6 @@ const getMe = async (req, res, next) => {
   }
 };
 
-/* ============================ */
 const updateMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
@@ -100,51 +90,53 @@ const updateMe = async (req, res, next) => {
     if (email) user.email = email;
     if (password) user.password = password;
 
-    await user.save();
+    // Actualizar imagen si se sube una nueva
+    if (req.imageUrl) {
+      if (user.image?.public_id) {
+        await deleteFromCloudinary(user.image.public_id);
+      }
+      user.image = { url: req.imageUrl, public_id: req.publicId };
+    }
 
+    await user.save();
     res.status(200).json(user);
   } catch (error) {
     next(error);
   }
 };
 
-/* ============================ */
+// Función compartida para eliminar un usuario y su imagen
+const removeUser = async (user) => {
+  if (user.image?.public_id) {
+    await deleteFromCloudinary(user.image.public_id);
+  }
+  await user.deleteOne();
+};
+
 const deleteMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
 
-    if (user.image?.public_id) {
-      await deleteFromCloudinary(user.image.public_id);
-    }
-
-    await user.deleteOne();
-
+    await removeUser(user);
     res.status(200).json({ message: 'Cuenta eliminada' });
   } catch (error) {
     next(error);
   }
 };
 
-/* ============================ */
 const deleteUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
 
-    if (user.image?.public_id) {
-      await deleteFromCloudinary(user.image.public_id);
-    }
-
-    await user.deleteOne();
-
+    await removeUser(user);
     res.status(200).json({ message: 'Usuario eliminado' });
   } catch (error) {
     next(error);
   }
 };
 
-/* ============================ */
 const toggleRole = async (req, res, next) => {
   try {
     if (req.params.id === req.user._id.toString()) {
@@ -163,7 +155,6 @@ const toggleRole = async (req, res, next) => {
   }
 };
 
-/* ============================ */
 const toggleFavorite = async (req, res, next) => {
   try {
     const { productId } = req.params;
@@ -174,7 +165,6 @@ const toggleFavorite = async (req, res, next) => {
     const user = await User.findById(req.user._id);
 
     const exists = user.favorites.includes(productId);
-
     if (exists) {
       user.favorites.pull(productId);
     } else {
@@ -182,7 +172,6 @@ const toggleFavorite = async (req, res, next) => {
     }
 
     await user.save();
-
     res.status(200).json(user);
   } catch (error) {
     next(error);

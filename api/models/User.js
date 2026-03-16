@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const { hashPassword, comparePassword } = require('../utils/hashPassword');
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -8,49 +8,41 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
-
   email: {
     type: String,
     required: true,
     unique: true,
     lowercase: true
   },
-
   password: {
     type: String,
     required: true,
     minlength: 6
   },
-
   role: {
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
   },
-
   image: {
     url: String,
     public_id: String
   },
-
   favorites: [
     { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }
   ]
 }, { timestamps: true });
 
-// Encriptar contraseña
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
+  this.password = await hashPassword(this.password);
   next();
 });
 
-// Comparar contraseña
 userSchema.methods.matchPassword = function(password) {
-  return bcrypt.compare(password, this.password);
+  return comparePassword(password, this.password);
 };
 
-// Ocultar password
 userSchema.methods.toJSON = function() {
   const obj = this.toObject();
   delete obj.password;
