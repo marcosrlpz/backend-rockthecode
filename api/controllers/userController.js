@@ -84,11 +84,22 @@ const updateMe = async (req, res, next) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
 
-    const { username, email, password } = req.body;
+    const { username, email, password, oldPassword } = req.body;
 
     if (username) user.username = username;
     if (email) user.email = email;
-    if (password) user.password = password;
+
+    // Si quiere cambiar la contraseña debe confirmar la antigua
+    if (password) {
+      if (!oldPassword) {
+        return res.status(400).json({ message: 'Debes proporcionar la contraseña actual para cambiarla' });
+      }
+      const match = await user.matchPassword(oldPassword);
+      if (!match) {
+        return res.status(401).json({ message: 'La contraseña actual no es correcta' });
+      }
+      user.password = password;
+    }
 
     // Actualizar imagen si se sube una nueva
     if (req.imageUrl) {
@@ -105,11 +116,28 @@ const updateMe = async (req, res, next) => {
   }
 };
 
-// Función compartida para eliminar un usuario y su imagen
+// Función compartida para eliminar un usuario, su imagen y sus productos
 const removeUser = async (user) => {
+  // Eliminar imagen de Cloudinary
   if (user.image?.public_id) {
     await deleteFromCloudinary(user.image.public_id);
   }
+
+  // Borrado en cascada: eliminar productos del usuario y sus imágenes
+  const products = await Product.find({ owner: user._id });
+  for (const product of products) {
+    if (product.image?.public_id) {
+      await deleteFromCloudinary(product.image.public_id);
+    }
+  }
+  await Product.deleteMany({ owner: user._id });
+
+  // Eliminar el usuario de los favoritos de otros usuarios
+  await User.updateMany(
+    { favorites: { $in: products.map(p => p._id) } },
+    { $pull: { favorites: { $in: products.map(p => p._id) } } }
+  );
+
   await user.deleteOne();
 };
 
